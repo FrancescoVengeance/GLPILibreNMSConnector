@@ -14,6 +14,9 @@ class Port implements Countable {
     var $vlan;
     var $glpiPortid;
 
+    static var $fdb = null;
+    static var $links = null;
+
     static function networkDevicePort($name, $portId, $mac, $down, $status, $switchHostname, $glpiNetworkDeviceId): Port {
         $port = new self();
         $port->mac = self::parseMac($mac);
@@ -65,8 +68,7 @@ class Port implements Countable {
     }
 
     private function findConnectedDevices() {
-        // @TODO Execute this qyery only once!
-        $jsonFdb = ApiConfig::getInstance()->executeQuery("resources/fdb")["ports_fdb"];
+        $jsonFdb = self::getFDB();
         if (!empty($jsonFdb))
             foreach ($jsonFdb as $key => $value) {
                 if ($value["port_id"] == $this->portId) {
@@ -77,7 +79,7 @@ class Port implements Countable {
     }
 
     public function isUpLink($hostnames) {
-        $uplinkPorts = ApiConfig::getInstance()->executeQuery("resources/links")["links"];
+        $uplinkPorts = self::getLinks();
         foreach ($uplinkPorts as $key => $value) {
             if ($value["local_port_id"] == $this->portId) {
                 $connectedTo = strtolower($value["remote_hostname"]);
@@ -97,8 +99,21 @@ class Port implements Countable {
         return $newMac;
     }
 
+    private static function getFDB(): array {
+        if(self::$fdb == null){
+            self::$fdb = ApiConfig::getInstance()->executeQuery("resources/fdb")["ports_fdb"];
+        }
+        return self::$fdb;
+    }
+
+    private static function getLinks(): array {
+        if(self::$links == null){
+            self::$links = ApiConfig::getInstance()->executeQuery("resources/links")["links"];
+        }
+        return self::$links;
+    }
+
     public function count() {
         // TODO: Implement count() method.
     }
-
 }
