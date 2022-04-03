@@ -65,15 +65,14 @@ class Port implements Countable {
     }
 
     private function findConnectedDevices() {
-        if (!empty(ApiConfig::getInstance()->executeQuery("resources/fdb")["ports_fdb"])) {
-            $jsonFdb = ApiConfig::getInstance()->executeQuery("resources/fdb")["ports_fdb"];
-        }
-        foreach ($jsonFdb as $key => $value) {
-            if ($value["port_id"] == $this->portId) {
-                $mac = $value["mac_address"];
-                $this->connectedTo[] = self::endDevicePort($mac);
+        $jsonFdb = ApiConfig::getInstance()->executeQuery("resources/fdb")["ports_fdb"];
+        if (!empty($jsonFdb))
+            foreach ($jsonFdb as $key => $value) {
+                if ($value["port_id"] == $this->portId) {
+                    $mac = $value["mac_address"];
+                    $this->connectedTo[] = self::endDevicePort($mac);
+                }
             }
-        }
     }
 
     public function isUpLink($hostnames) {
