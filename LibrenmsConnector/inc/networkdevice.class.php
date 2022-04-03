@@ -3,8 +3,8 @@
 include ("port.class.php");
 include ("apiconfig.class.php");
 
-class NetworkDevice
-{
+class NetworkDevice {
+
     var $hostname;
     var $id;
     var $glpiID;
@@ -15,8 +15,7 @@ class NetworkDevice
     var $SNMPcommunity;
     var $ports = [];
 
-    function __construct($id, $hostname, $sysName, $location, $type, $hardware, $SNMPcommunity)
-    {
+    function __construct($id, $hostname, $sysName, $location, $type, $hardware, $SNMPcommunity) {
         $this->SNMPcommunity = $SNMPcommunity;
         $this->hostname = $hostname;
         $this->id = $id;
@@ -25,24 +24,24 @@ class NetworkDevice
         $this->type = $type;
         $this->hardware = $hardware;
         $this->findGlpiId();
-        $this->findPorts();
+        if ($this->glpiID > 0)
+            $this->findPorts();
     }
 
-    private function findGlpiId()
-    {
+    private function findGlpiId() {
         $networkDevice = new NetworkEquipment();
         $fields = $networkDevice->find("name = " . "'" . $this->sysName . "'");
 
         foreach ($fields as $field) {
             if (isset($field["id"])) {
-                $this->glpiID = $field["id"];;
+                $this->glpiID = $field["id"];
+                ;
                 break;
             }
         }
     }
 
-    static function createDevice($jsonDevice): NetworkDevice
-    {
+    static function createDevice($jsonDevice): NetworkDevice {
         $hostname = "";
         $id = "";
         $sysName = "";
@@ -80,8 +79,7 @@ class NetworkDevice
         return new NetworkDevice($id, $hostname, $sysName, $location, $type, $hardware, $SNMPcommunity);
     }
 
-    private function findPorts(): void
-    {
+    private function findPorts(): void {
         if ($this->type == "network") {
             $jsonPorts = ApiConfig::getInstance()->executeQuery("devices/" . $this->id . "/ports?columns=ifName%2Cport_id")["ports"];
             foreach ($jsonPorts as $key => $value) {
@@ -93,51 +91,43 @@ class NetworkDevice
         }
     }
 
-    public function checkUplinkPorts($hostnames)
-    {
+    public function checkUplinkPorts($hostnames) {
         foreach ($this->ports as $port) {
             $port->isUpLink($hostnames);
         }
     }
 
-    public static function connect(Port $switchPort, Port $endDevicePort): string
-    {
+    public static function connect(Port $switchPort, Port $endDevicePort): string {
         global $DB;
 
         $query = "select networkports_id_1, networkports_id_2 "
-            . "from glpi_networkports_networkports "
-            . "where networkports_id_2 = " . $endDevicePort->glpiPortid;
+                . "from glpi_networkports_networkports "
+                . "where networkports_id_2 = " . $endDevicePort->glpiPortid;
 
         $resultSet = $DB->request($query);
-        foreach ($resultSet as $row)
-        {
-            if ($row["networkports_id_2"] == $endDevicePort->glpiPortid && $row["networkports_id_1"] == $switchPort->glpiPortid)
-            {
+        foreach ($resultSet as $row) {
+            if ($row["networkports_id_2"] == $endDevicePort->glpiPortid && $row["networkports_id_1"] == $switchPort->glpiPortid) {
                 return "skip";
-            }
-            else if(isset($row["networkports_id_1"]) && isset($row["networkports_id_2"]) && $row["networkports_id_1"] != $switchPort->glpiPortid)
-            {
+            } else if (isset($row["networkports_id_1"]) && isset($row["networkports_id_2"]) && $row["networkports_id_1"] != $switchPort->glpiPortid) {
                 $update = "update glpi_networkports_networkports set networkports_id_1 = " . $switchPort->glpiPortid
-                    . " where networkports_id_2 = " . $endDevicePort->glpiPortid;
+                        . " where networkports_id_2 = " . $endDevicePort->glpiPortid;
                 $result = $DB->query($update);
-                if($result)
-                {
+                if ($result) {
                     $query = "select glpi_networkports.name as portname, glpi_networkequipments.name as hostname "
-                        . " from glpi_networkports, glpi_networkequipments "
-                        . " where glpi_networkports.id = " . $row["networkports_id_1"]
-                        . " and "
-                        . " glpi_networkequipments.id = glpi_networkports.items_id";
+                            . " from glpi_networkports, glpi_networkequipments "
+                            . " where glpi_networkports.id = " . $row["networkports_id_1"]
+                            . " and "
+                            . " glpi_networkequipments.id = glpi_networkports.items_id";
                     $oldSwitchPort = $DB->request($query);
                     $previousPort = null;
                     $previousHostname = null;
-                    foreach ($oldSwitchPort as $oldPort)
-                    {
+                    foreach ($oldSwitchPort as $oldPort) {
                         $previousPort = $oldPort["portname"];
                         $previousHostname = $oldPort["hostname"];
                     }
 
                     $description = "moved: " . $endDevicePort->mac . " from " . $previousPort . " on " . $previousHostname
-                        . " to " . $switchPort->name . " on " . $switchPort->switchHostname;
+                            . " to " . $switchPort->name . " on " . $switchPort->switchHostname;
                     echo "<li>" . $description . "</li>";
                     Logger::log($switchPort, $endDevicePort, "update", $description);
                     return "update";
@@ -146,22 +136,20 @@ class NetworkDevice
         }
 
         $result = $DB->insert(
-            "glpi_networkports_networkports",
-            [
-                "networkports_id_1" => $switchPort->glpiPortid,
-                "networkports_id_2" => $endDevicePort->glpiPortid
-            ]
+                "glpi_networkports_networkports",
+                [
+                    "networkports_id_1" => $switchPort->glpiPortid,
+                    "networkports_id_2" => $endDevicePort->glpiPortid
+                ]
         );
 
-        if($result)
-        {
+        if ($result) {
             return "insert";
         }
         return "skip";
     }
 
     //
-
 //        $connqector = new NetworkPort_NetworkPort();
 //        $fields = $connector->find("networkports_id_1 = " . $port1 . " and networkports_id_2 = " . $port2 .
 //                                        " or networkports_id_1 = " . $port2 . " and networkports_id_2 = " . $port1);
