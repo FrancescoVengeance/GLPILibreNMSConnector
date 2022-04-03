@@ -65,6 +65,7 @@ class Port implements Countable {
     }
 
     private function findConnectedDevices() {
+        // @TODO Execute this qyery only once!
         $jsonFdb = ApiConfig::getInstance()->executeQuery("resources/fdb")["ports_fdb"];
         if (!empty($jsonFdb))
             foreach ($jsonFdb as $key => $value) {
