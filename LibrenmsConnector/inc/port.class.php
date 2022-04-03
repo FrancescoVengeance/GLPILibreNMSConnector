@@ -14,8 +14,8 @@ class Port implements Countable {
     var $vlan;
     var $glpiPortid;
 
-    static var $fdb = null;
-    static var $links = null;
+    static $fdb = null;
+    static $links = null;
 
     static function networkDevicePort($name, $portId, $mac, $down, $status, $switchHostname, $glpiNetworkDeviceId): Port {
         $port = new self();
