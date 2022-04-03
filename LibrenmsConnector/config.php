@@ -48,9 +48,13 @@ if ($_SESSION["glpiactiveprofile"]["interface"] == "central") {
     $serverip = ApiConfig::getInstance()->getServerIp();
     $apiKey = ApiConfig::getInstance()->getApiKey();
     $token = Session::getNewCSRFToken(true);
+    // Test connection with saved data
+    // @TODO Test connection with form data
     if (isset($_POST["testconnection"])) {
         $res = ApiConfig::getInstance()->executeQuery('system');
-        echo '<h3>' . (($res['count'] == 1) ? "Conection OK" : "Connection FAILED") . '</h3><br />';
+        echo '<h3>' . (($res['count'] == 1) ?
+                "Conection OK" :
+                "Connection FAILED! <br />Response:  <pre>" . print_r($res, TRUE) . "</pre>") . "</h3><br />";
     }
 
     echo "<h3>Configure LibreNMS API Url and Key</h3><br>";
@@ -62,17 +66,13 @@ if ($_SESSION["glpiactiveprofile"]["interface"] == "central") {
         <input type='hidden' name='_glpi_csrf_token' value='$token'>
         <button type='submit' class='save' name='save'><p>Save</p></button>
     </form></div>";
-    echo "<div>
-        <form method='post'>
-        <button class='save' name='testconnection' type='submit'><p>Test connection to server</p></button>
-        <input type='hidden' name='_glpi_csrf_token' value='$token'>
-    </form>
-        
-        
-        </div>";
 
     if (isset($_POST["save"])) {
         save($_POST["api-key"], $_POST["server_ip"]);
+        echo "<div><form method='post'>
+        <button class='save' name='testconnection' type='submit'><p>Test connection to server</p></button>
+        <input type='hidden' name='_glpi_csrf_token' value='$token'>
+        </form></div>";
     }
 } else {
     Html::helpHeader("NetDiscovery", $_SERVER['PHP_SELF']);
