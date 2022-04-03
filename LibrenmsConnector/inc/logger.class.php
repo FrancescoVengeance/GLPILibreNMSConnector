@@ -27,6 +27,13 @@ class Logger
                      . "values ('SKIP', null, null, '" . $device->switchHostname . "' , '" . $device->name . "' , '". $connectedDevice->mac . "')" ;
                  $DB->query($query);
                  break;
+             
+             case "not found":
+                 $query = "insert into glpi_plugin_netdiscovery_log (status, name, ip_addr, switch_name, switch_port_name, mac_addr) "
+                     . "values ('NOT FOUND', null, null, '" . $device->switchHostname . "' , '" . $device->name . "' , '". $connectedDevice->mac . "')" ;
+                 $DB->query($query);
+                 break;
+             
          }
     }
 }
