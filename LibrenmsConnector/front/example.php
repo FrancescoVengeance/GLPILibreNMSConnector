@@ -101,7 +101,7 @@ function execute() {
                                 break;
                             default:
                                 echo "<li>skipped mac: " . $connectedDevice->mac . "</li>";
-                                Logger::log($port, $connectedDevice, "unchanged");
+                                Logger::log($port, $connectedDevice, "skip");
                                 break;
                         }
                     } else {
